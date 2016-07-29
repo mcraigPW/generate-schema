@@ -4,6 +4,8 @@ var Type = require('type-of-is')
 // Constants
 var DRAFT = "http://json-schema.org/draft-04/schema#"
 
+var requireAllProps = false
+
 function getUniqueKeys (a, b, c) {
   var a = Object.keys(a)
   var b = Object.keys(b)
@@ -110,12 +112,18 @@ function processObject (object, output, nested) {
     output.properties = output.properties || {}
   }
 
+  var requiredProps = []
+
   for (var key in object) {
     var value = object[key]
     var type = Type.string(value).toLowerCase()
 
     if (type === 'undefined') {
       type = 'null'
+    }
+
+    if (requireAllProps) {
+      requiredProps.push(key)
     }
 
     switch (type) {
@@ -134,13 +142,21 @@ function processObject (object, output, nested) {
     }
   }
 
+  if (!nested && requireAllProps) {
+    output.required = requiredProps
+  }
+
   return nested ? output.properties : output
 }
 
-module.exports = function (title, object) {
+module.exports = function (title, object, requireAll, description) {
   var processOutput
   var output = {
     $schema: DRAFT
+  }
+
+  if (requireAll) {
+    requireAllProps = true
   }
 
   // Determine title exists
@@ -149,6 +165,10 @@ module.exports = function (title, object) {
     title = undefined
   } else {
     output.title = title
+  }
+
+  if (typeof descriptions === 'string') {
+    object.description = description
   }
 
   // Set initial object type
@@ -160,6 +180,9 @@ module.exports = function (title, object) {
       processOutput = processObject(object)
       output.type = processOutput.type
       output.properties = processOutput.properties
+      if (requireAllProps) {
+        output.required = Object.keys(processOutput.properties)
+      }
       break
 
     case "array":
