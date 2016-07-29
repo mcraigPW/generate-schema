@@ -167,8 +167,8 @@ module.exports = function (title, object, requireAll, description) {
     output.title = title
   }
 
-  if (typeof descriptions === 'string') {
-    object.description = description
+  if (typeof description === 'string') {
+    output.description = description
   }
 
   // Set initial object type
